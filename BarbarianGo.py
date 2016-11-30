@@ -44,6 +44,7 @@ while True:
   played = mygame.takeATurn(mygame.players[0]) #Human player is first player
   if not played:
       print "Human player passed. Game over."
+      mygame.scoreGame()
       break
   else:
     for i in range(diff):

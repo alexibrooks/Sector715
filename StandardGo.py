@@ -9,6 +9,7 @@ while True:
     mygame.passCount+=1
     if mygame.passCount >= len(mygame.players):
       print "All players have passed. Game over."
+      mygame.scoreGame()
       break
   else:
     mygame.passCount = 0

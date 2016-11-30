@@ -2,8 +2,10 @@
 #There can be up to 19x19 different groups (if we checkerboarded the board).
 
 EMPTY = "."
+CONTESTED = " "
 ERRORLOG = []
 
+##############################################################################
 class Pos:
   def __init__(self,row,col):
     self.r = row
@@ -28,11 +30,13 @@ class Group:
     return self.number < other.number
   def __gt__(self,other):
     return self.number > other.number
+##############################################################################
 
+##############################################################################
 class Board:
   def __init__(self,size):
     self.size = size #Standard dimensions of a GO board is 19x19
-    self.groups = [] #There are initially no groups
+    self.groups = [] #There are initially no groups TODO presently unused? Implicit
     self.unused = range(size*size) #We will make no more than size^2 groups
     self.emptygroup = Group(EMPTY,None)
     self.board = [[self.emptygroup for i in range(self.size)] for j in range(self.size)]
@@ -84,15 +88,19 @@ class Board:
       rownum+=1
     print "+"+"-"*(self.size*2-1)+"+"
 
-  def addPiece(self,pos,color):
+  def addPiece(self,pos,color,scoring=False):
+    #Add a piece of the given color at the given position and conduct group
+    #updates and capturing. If scoring is True, then no capturing is done.
     if pos.r<0 or pos.r>=self.size or pos.c<0 or pos.c>=self.size:
       ERRORLOG.append("addPiece Failure: position out of bounds.")
       return False
-    if self.get(pos).color != EMPTY:
+    if self.get(pos) != self.emptygroup:
       ERRORLOG.append("addPiece Failure: position already occupied.")
       return False
     #self.board[pos.r][pos.c] = color
     self.updateGroups(pos,color)
+    if scoring:
+      return True
     vulnGroups = self.getAdjacentGroups(pos,color,"other")
     toCapture = [not self.checkLiberties(grp) for grp in vulnGroups]
     for i in range(len(vulnGroups)):
@@ -147,6 +155,18 @@ class Board:
       return True
     return False
 
+  def adjacentColor(self,pos,color):
+    #Return True if grp is adjacent to pos, False otherwise
+    if pos.r>0 and self.board[pos.r-1][pos.c].color == color:
+      return True
+    if pos.r<self.size-1 and self.board[pos.r+1][pos.c].color == color:
+      return True
+    if pos.c>0 and self.board[pos.r][pos.c-1].color == color:
+      return True
+    if pos.c<self.size-1 and self.board[pos.r][pos.c+1].color == color:
+      return True
+    return False
+
   def capture(self,grp):
     for r in range(self.size):
       for c in range(self.size):
@@ -174,6 +194,63 @@ class Board:
     for x in adj:
       self.unused.append(x.number)
 
+  def computeScore(self):
+    #This version makes an actual temporary board
+    nonecolor = "NONE" #Bit of a kludge here. Need to not match with this.
+    scoreboard = Board(self.size)
+    scoreboard.emptygroup.color = nonecolor
+    for r in range(self.size):
+      for c in range(self.size):
+        p = Pos(r,c)
+        scoreboard.addPiece(p,self.get(p).color,True)
+    #Create the relevant groups
+    emptygrps = []
+    colors = []
+    for r in range(self.size):
+      for c in range(self.size):
+        g = scoreboard.get(Pos(r,c))
+        if g.color==EMPTY and g not in emptygrps:
+          emptygrps.append(g)
+        elif g.color != EMPTY and g.color not in colors:
+          colors.append(g.color)
+    #Mark the empty groups according to adjacency
+    for g in emptygrps:
+      notadjcolors = list(colors)
+      adjcolors = []
+      for p in g.members:
+        toRemove = []
+        for c in notadjcolors:
+          if scoreboard.adjacentColor(p,c):
+            toRemove.append(c)
+            adjcolors.append(c)
+        for x in toRemove:
+          notadjcolors.remove(x)
+      if len(adjcolors) == 1:
+        g.color = adjcolors[0] #Recolor for later score display/calculation
+      else:
+        g.color = CONTESTED
+    #Calculate color scores
+    scores = {}
+    for c in colors:
+      scores[c] = 0
+    scores[CONTESTED] = 0
+    for r in range(self.size):
+      for c in range(self.size):
+        scores[scoreboard.get(Pos(r,c)).color] += 1
+    #Display scores
+    self.displayScore(scores,scoreboard)
+
+  def displayScore(self,scores,scoreboard):
+    scoreboard.printBoard()
+    contested = scores.pop(CONTESTED)
+    print "SCORES:"
+    for player in scores:
+      print player,"scores",scores[player],"points."
+    print "There are",contested,"contested spaces."
+
+##############################################################################
+
+##############################################################################
 class Game:
   def __init__(self,size):
     self.players = ["X","O"]
@@ -209,6 +286,11 @@ class Game:
         return False
     return True #Played successfully
 
+  def scoreGame(self):
+    self.board.computeScore()
+##############################################################################
+
+##############################################################################
 if __name__=="__main__":
   testgame = Game(19)
   turn = 0
