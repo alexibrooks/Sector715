@@ -102,6 +102,7 @@ class Board:
     if scoring:
       return True
     vulnGroups = self.getAdjacentGroups(pos,color,"other")
+    vulnGroups = [grp for grp in vulnGroups if grp != self.emptygroup]
     toCapture = [not self.checkLiberties(grp) for grp in vulnGroups]
     for i in range(len(vulnGroups)):
       if toCapture[i]:
@@ -174,6 +175,7 @@ class Board:
         if self.get(p) == grp:
           self.set(p,self.emptygroup)
     self.unused.append(grp.number)
+    self.groups.remove(grp)
 
   def updateGroups(self,pos,color):
     adj = self.getAdjacentGroups(pos,color,"match")
@@ -182,6 +184,7 @@ class Board:
       g = Group(color,minunused)
       self.unused.remove(minunused)
       self.set(pos,g)
+      self.groups.append(g)
       return
     n = min(adj) #Otherwise, consolidate
     adj.remove(n)
@@ -192,7 +195,9 @@ class Board:
         if self.get(p) in adj:
           self.set(p,n)
     for x in adj:
-      self.unused.append(x.number)
+      if x in self.groups:
+        self.unused.append(x.number)
+        self.groups.remove(x)
 
   def computeScore(self):
     #This version makes an actual temporary board
