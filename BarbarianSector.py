@@ -13,14 +13,14 @@ def playBarb(game):
       
 
 def getDiff():
-  #Easy = 2, Medium = 3, Hard = 4
+  #Easy = 1, Medium = 2, Hard = 3
   inp = raw_input("Enter a difficulty number: ")
   if inp.lower() == "easy":
-    return 2
+    return 1
   if inp.lower() == "medium":
-    return 3
+    return 2
   if inp.lower() == "hard":
-    return 4
+    return 3
   try:
     diff = int(inp)
     if diff < 1:
@@ -38,7 +38,7 @@ print "a solitaire game based on the strategy game Go."
 print ""
 print "Barbarians play randomly, but they get to play more than you do!"
 print "Difficulty is based on how many times the barbarian plays between each"
-print "of your plays. EASY (2), MEDIUM (3), HARD (4)."
+print "of your plays. EASY (1), MEDIUM (2), HARD (3)."
 print "Note that you will only be able to play within a certain range of your"
 print "existing groups."
 diff = getDiff()
