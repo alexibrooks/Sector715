@@ -122,7 +122,6 @@ class Board:
         ans.append(self.board[pos.r][pos.c-1])
       if pos.c<self.size-1 and self.board[pos.r][pos.c+1].color == color:
         ans.append(self.board[pos.r][pos.c+1])
-      return ans
     elif mode == "other":
       if pos.r>0 and self.board[pos.r-1][pos.c].color != color:
         ans.append(self.board[pos.r-1][pos.c])
@@ -132,10 +131,11 @@ class Board:
         ans.append(self.board[pos.r][pos.c-1])
       if pos.c<self.size-1 and self.board[pos.r][pos.c+1].color != color:
         ans.append(self.board[pos.r][pos.c+1])
-      return ans
     else:
       print "Mode",mode,"not implemented."
       return False
+    ans = list(set(ans))
+    return ans
 
   def checkLiberties(self,grp):
     #Return True if a group has liberties, False otherwise

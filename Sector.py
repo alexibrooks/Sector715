@@ -66,18 +66,18 @@ class Sector(go.Board):
     self.updateGroups(pos,color) #Set toUpdateSupply at end, not here
     if scoring:
       return True
-    vulnGroups = self.getAdjacentGroups(pos,color,"other") #TODO dups?
+    vulnGroups = self.getAdjacentGroups(pos,color,"other") #pre-de-duped
     vulnGroups = [grp for grp in vulnGroups if grp != self.emptygroup]
     toCapture = [not self.checkLiberties(grp) for grp in vulnGroups]
     for i in range(len(vulnGroups)):
-      if toCapture[i]: #TODO does capture interfere?
-        self.capture(vulnGroups[i])
+      if toCapture[i]: #TODO does capture interfere? (shouldn't)
         if vulnGroups[i].color not in self.toUpdateSupply:  
           self.toUpdateSupply.append(vulnGroups[i].color)
-    if not self.checkLiberties(self.get(pos)):
-      self.capture(self.get(pos))
+        self.capture(vulnGroups[i])
     if color not in self.toUpdateSupply:
       self.toUpdateSupply.append(color)
+    if not self.checkLiberties(self.get(pos)):
+      self.capture(self.get(pos))
     return True
 
 #############################################################################
